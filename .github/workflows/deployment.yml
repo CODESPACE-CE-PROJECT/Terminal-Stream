@@ -1,0 +1,48 @@
+name: Deployment
+
+on:
+  # push:
+  #     branches: ['main']
+  # pull_request:
+  #     branches: ['dev']
+  #
+jobs:
+  # sonarqube:
+  #   runs-on: self-hosted
+  #   if: github.event_name == 'pull_request'
+  #
+  #   name: Build and Analyze
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - uses: sonarsource/sonarqube-scan-action@master
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  # deploy:
+  #     runs-on: self-hosted
+  #     if: github.event_name == 'push'
+  #     steps:
+  #         - name: Clone Repo 🤖
+  #           uses: actions/checkout@v3
+  #
+  #         - name: Clear Cache 🫧
+  #           run: |
+  #             docker stop compiler || true
+  #             docker rm compiler || true
+  #             docker rmi compiler-compiler:latest || true
+  #
+  #         - name: Run Image ✅
+  #           run: |
+  #             docker compose up -d
+  #
+  #         - name: Message ✉️
+  #           uses: fjogeleit/http-request-action@v1
+  #           with:
+  #             timeout: 60000
+  #             url: ${{ secrets.DISCORD_WEBHOOK }}
+  #             method: 'POST'
+  #             customHeaders: '{"Content-Type": "application/json"}'
+  #             data: '{"content": "CEPP Backend Build ✅","embeds": [{"title": "Backend url","description": "https://compiler-api.unixvextor.com"}]}'
+
