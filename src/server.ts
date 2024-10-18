@@ -6,11 +6,11 @@ import helmet from "helmet";
 import cluster from "cluster";
 import swaggerDocs from "./utils/swagger";
 import logger from "./utils/logger";
+import {createServer} from 'http'
 
 // Router
 import { serverRouter } from "./routes/server.route";
 import { environment } from "./config/environment";
-import { compilerRouter } from "./routes/compiler.route";
 
 config();
 
@@ -21,9 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(cors());
 
+
 // API Route
 app.use("/", serverRouter);
-app.use("/compiler", compilerRouter);
 
 const errorHandler = async (
   err: any,
