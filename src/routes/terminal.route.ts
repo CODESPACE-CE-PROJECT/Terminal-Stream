@@ -1,8 +1,13 @@
-import { Router } from "express";
-import { initServer } from "../controllers/server.controller";
+import { Router, Request, Response } from "express";
+import { terminalController } from "../controllers/terminal.controller";
+import { DockerService } from "../services/docker.service";
 
-const router = Router();
+const terminalRouter = (dockerService: DockerService) => {
+  const router = Router();
+  router.get("/createContainer/:name", (req: Request, res: Response) =>
+    terminalController.createContainer(req, res, dockerService),
+  );
 
-router.get("/", initServer);
-
-export { router as serverRouter };
+  return router;
+};
+export { terminalRouter };
