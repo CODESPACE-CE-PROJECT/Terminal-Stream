@@ -1,4 +1,7 @@
 ---
+networks:
+  backend:
+    external: true
 services:
   compiler:
     container_name: terminal-stream 
@@ -6,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      PORT: 3002
-      DOCKER_HOST: 10.10.10.246
+      PORT: 3003
     restart: unless-stopped
-    network_mode: "host"
+    networks:
+        - backend
