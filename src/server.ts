@@ -4,7 +4,6 @@ import { config } from "dotenv";
 import os from "os";
 import helmet from "helmet";
 import cluster from "cluster";
-import swaggerDocs from "./utils/swagger";
 import logger from "./utils/logger";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
@@ -14,7 +13,6 @@ import { setupMaster, setupWorker } from "@socket.io/sticky";
 // Router
 import { serverRouter } from "./routes/server.route";
 import { environment } from "./config/environment";
-import { terminalRouter } from "./routes/terminal.route";
 import { DockerService } from "./services/docker.service";
 import { ioHandler } from "./services/socket.service";
 
@@ -47,7 +45,6 @@ app.use(errorHandler);
 
 // API Route
 app.use("/", serverRouter);
-app.use("/terminal", terminalRouter(dockerService));
 
 if (cluster.isPrimary) {
   const httpServer = createServer(app);
@@ -55,6 +52,7 @@ if (cluster.isPrimary) {
   setupMaster(httpServer, {
     loadBalancingMethod: "least-connection",
   });
+
   setupPrimary();
 
   cluster.setupPrimary({
@@ -67,21 +65,24 @@ if (cluster.isPrimary) {
 
   cluster.on("exit", (worker, _code, _signal) => {
     logger.info(`Worker ${worker.process.pid} died`);
-    cluster.fork();
+    cluster.fork()
   });
 } else {
   const httpServer = createServer(app);
   const io = new Server(httpServer, {
-    connectionStateRecovery: {},
     cors: {
       origin: "*",
+      methods: ["GET", "POST"],
+      credentials: true,
     },
+    allowEIO3: true
   });
+
   io.adapter(createAdapter());
   setupWorker(io);
   ioHandler(io, dockerService);
+
   httpServer.listen(environment.PORT, "0.0.0.0", () => {
     logger.info(`Server ready on port ${environment.PORT}`);
-    swaggerDocs(app);
   });
 }

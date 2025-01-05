@@ -1,11 +1,13 @@
 import Dockerode from "dockerode";
 import { LanguageType } from "../interface/terminal.interface";
 import tar from "tar-stream";
+import stream from 'stream'
+import { environment } from "../config/environment";
 
 export class DockerService {
   private docker: Dockerode;
   constructor() {
-    this.docker = new Dockerode({
+    this.docker = new Dockerode(environment.NODE_ENV === 'production' ? { socketPath: '/var/run/docker.sock' } : {
       host: "127.0.0.1",
       port: 2375,
     });
@@ -18,7 +20,7 @@ export class DockerService {
   public createContainer = async (name: string): Promise<string> => {
     try {
       const container = await this.docker.createContainer({
-        Image: "compiler-terminal:latest",
+        Image: "terminal-compiler:latest",
         Cmd: ["/bin/ash"],
         name: `${name}`,
         AttachStdin: true,
@@ -100,8 +102,12 @@ export class DockerService {
         AttachStdin: true,
         Tty: true,
       });
+      const stdout = new stream.PassThrough()
+
       const ttyStream = await exec.start({ hijack: true, stdin: true });
-      return ttyStream;
+      this.docker.modem.demuxStream(ttyStream, stdout, stdout)
+
+      return { ttyStream, stdout };
     } catch (error) {
       console.log(error);
     }
