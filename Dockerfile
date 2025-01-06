@@ -1,47 +1,48 @@
-FROM node:18-alpine AS development
+# Base image for development stage
+FROM node:20.18.0-alpine AS development
 
 WORKDIR /usr/src/app
 
-COPY --chown=node:node package.json ./
+# Install dependencies
+COPY --chown=node:node package.json yarn.lock ./
+RUN yarn install
 
-COPY --chown=node:node yarn.lock ./
-
-RUN yarn
-
-COPY --chown=node:mode . .
-
-USER node
-
-FROM node:18-alpine As Build
-
-WORKDIR /usr/src/app
-
-COPY --chown=node:node package.json ./
-
-COPY --chown=node:node yarn.lock ./
-
-COPY --chown=node:node --from=development  /usr/src/app/node_modules ./node_modules
-
+# Copy application files
 COPY --chown=node:node . .
 
+# Set environment for development
+ENV NODE_ENV=development
+
+# Build stage
+FROM node:20.18.0-alpine AS build
+
+WORKDIR /usr/src/app
+
+# Copy dependencies and application files from development stage
+COPY --from=development /usr/src/app /usr/src/app
+
+# Build the application
 RUN yarn build
 
-ENV NODE_ENV production
+# Install only production dependencies
+RUN yarn install --production --frozen-lockfile
 
-RUN yarn install --frozen-lockfile 
+# Production stage
+FROM node:20.18.0-alpine AS production
 
+WORKDIR /usr/src/app
+
+# Copy only necessary files from build stage
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/dist ./dist
+
+# Switch to non-root user for better security
 USER node
 
-FROM node:18-alpine As production
+ENV NODE_ENV=production
 
-RUN apk add --no-cache \
-  build-base \
-  gcc \
-  g++ \
-  make \
-  openjdk17-jdk
+# Expose the application port
+EXPOSE 3003
 
-COPY --chown=node:node --from=Build /usr/src/app/node_modules ./node_modules
-COPY --chown=node:node --from=Build /usr/src/app/dist ./dist
-
-CMD [ "node", "dist/server.js"]
+# Run the application
+CMD ["node", "dist/server.js"]

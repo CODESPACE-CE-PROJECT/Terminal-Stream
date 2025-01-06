@@ -1,5 +1,5 @@
 {
-  "name": "Terminal Stream",
+  "name": "terminal-stream",
   "version": "1.0.0",
   "description": "Terminal Stream",
   "main": "src/server.ts",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@socket.io/cluster-adapter": "^0.2.2",
     "@socket.io/cluster-engine": "^0.1.0",
-    "@socket.io/sticky": "^1.0.4", 
+    "@socket.io/sticky": "^1.0.4",
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "pino": "^9.4.0",
     "pino-pretty": "^11.2.2",
+    "rimraf": "^6.0.1",
     "socket.io": "^4.8.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
@@ -34,7 +35,7 @@
     "typescript": "^5.3.3",
     "zod": "^3.22.4"
   },
-  "devDependencies":{
+  "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/cors": "^2.8.17",
     "@types/dockerode": "^3.3.31",

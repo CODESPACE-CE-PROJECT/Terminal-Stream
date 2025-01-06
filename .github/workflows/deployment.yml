@@ -1,48 +1,50 @@
 name: Deployment
 
 on:
-  # push:
-  #     branches: ['main']
-  # pull_request:
-  #     branches: ['dev']
-  #
-jobs:
-  # sonarqube:
-  #   runs-on: self-hosted
-  #   if: github.event_name == 'pull_request'
-  #
-  #   name: Build and Analyze
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - uses: sonarsource/sonarqube-scan-action@master
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-  # deploy:
-  #     runs-on: self-hosted
-  #     if: github.event_name == 'push'
-  #     steps:
-  #         - name: Clone Repo 🤖
-  #           uses: actions/checkout@v3
-  #
-  #         - name: Clear Cache 🫧
-  #           run: |
-  #             docker stop compiler || true
-  #             docker rm compiler || true
-  #             docker rmi compiler-compiler:latest || true
-  #
-  #         - name: Run Image ✅
-  #           run: |
-  #             docker compose up -d
-  #
-  #         - name: Message ✉️
-  #           uses: fjogeleit/http-request-action@v1
-  #           with:
-  #             timeout: 60000
-  #             url: ${{ secrets.DISCORD_WEBHOOK }}
-  #             method: 'POST'
-  #             customHeaders: '{"Content-Type": "application/json"}'
-  #             data: '{"content": "CEPP Backend Build ✅","embeds": [{"title": "Backend url","description": "https://compiler-api.unixvextor.com"}]}'
+  push:
+      branches: ['main']
+  pull_request:
+      branches: ['dev']
+jobs: 
+  deploy:
+      runs-on: self-hosted
+      if: github.event_name == 'push'
+      steps:
+          - name: Clone Repo 🤖
+            uses: actions/checkout@v3
+
+          - name: Set Environment Variables 🔠
+            env:
+              JWT_SECRET: ${{ secrets.JWT_SECRET }}
+              BACKEND_URL: ${{ secrets.BACKEND_URL }}
+              DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+              DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+              DOCKER_EMAIL: ${{ secrets.DOCKER_EMAIL }}
+              DOCKER_SERVERADDRESS: ${{ secrets.DOCKER_SERVERADDRESS }}
+            run: |
+              echo "JWT_SECRET=$JWT_SECRET" >> .env
+              echo "BACKEND_URL=$BACKEND_URL" >> .env
+              echo "DOCKER_USERNAME=$DOCKER_USERNAME" >> .env 
+              echo "DOCKER_PASSWORD=$DOCKER_PASSWORD" >> .env
+              echo "DOCKER_EMAIL=$DOCKER_EMAIL" >> .env
+              echo "DOCKER_SERVERADDRESS=$DOCKER_SERVERADDRESS" >> .env
+
+          - name: Clear Cache 🫧
+            run: |
+              docker stop terminal-stream || true
+              docker rm terminal-stream || true
+              docker rmi terminal-stream-terminal-stream:latest || true
+
+          - name: Run Image ✅
+            run: |
+              docker compose up -d
+
+          - name: Message ✉️
+            uses: fjogeleit/http-request-action@v1
+            with:
+              timeout: 60000
+              url: ${{ secrets.DISCORD_WEBHOOK }}
+              method: 'POST'
+              customHeaders: '{"Content-Type": "application/json"}'
+              data: '{"content": "CE PROJECT Terminal Stream Build ✅","embeds": [{"title": "Terminal Stream url","description": "https://codespace-terminal-stream.srv-demo-2.home.unixvextor.com"}]}'
 

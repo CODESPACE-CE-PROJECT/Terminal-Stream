@@ -20,9 +20,9 @@ export class DockerService {
   public createContainer = async (name: string): Promise<string> => {
     try {
       const container = await this.docker.createContainer({
-        Image: "terminal-compiler:latest",
+        Image: "ghcr.io/codespace-ce-project/codespace-terminal:latest",
         Cmd: ["/bin/ash"],
-        name: `${name}`,
+        name: `cs-${name}`,
         AttachStdin: true,
         AttachStdout: true,
         AttachStderr: true,
@@ -31,9 +31,26 @@ export class DockerService {
       });
       await container.start();
       return container.id.toString();
-    } catch (error) {
-      console.log(error);
-      return "error";
+    } catch (error: any) {
+      if (error.message.includes("No such image")) {
+        console.log("Image not found. Pulling the image...");
+        try {
+          const auth = {
+            username: environment.DOCKER_USERNAME,
+            password: environment.DOCKER_PASSWORD,
+            email: environment.DOCKER_EMAIL,
+            serveraddress: environment.DOCKER_SERVERADDRESS
+          };
+          await this.docker.pull("ghcr.io/codespace-ce-project/codespace-terminal:latest", { 'authconfig': auth });
+          console.log("Image pulled successfully. Retrying container creation...");
+          return await this.createContainer(name); // Retry after pulling the image
+        } catch (pullError) {
+          console.log("Failed to pull the image:", pullError);
+          return "error";
+        }
+      } else {
+        return "error";
+      }
     }
   };
 

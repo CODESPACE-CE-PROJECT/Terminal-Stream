@@ -3,13 +3,30 @@ networks:
   backend:
     external: true
 services:
-  compiler:
+  terminal-stream:
     container_name: terminal-stream 
     build:
       context: .
       dockerfile: Dockerfile
     environment:
       PORT: 3003
+      JWT_SECRET: ${JWT_SECRET} 
+      BACKEND_URL: ${BACKEND_URL} 
+      NODE_ENV: production 
+      DOCKER_USERNAME: ${DOCKER_USERNAME} 
+      DOCKER_PASSWORD: ${DOCKER_PASSWORD} 
+      DOCKER_EMAIL: ${DOCKER_EMAIL} 
+      DOCKER_SERVERADDRESS: ${DOCKER_SERVERADDRESS}  
     restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      traefik.enable: "true"
+      traefik.http.services.terminal-stream-codespace.loadbalancer.server.port: "3003"
+      traefik.http.services.terminal-stream-codespace.loadbalancer.server.scheme: "http"
+      traefik.http.routers.terminal-stream-codespace-https.entrypoints: "websecure"
+      traefik.http.routers.terminal-stream-codespace-https.rule: "Host(`codespace-terminal-stream.srv-demo-2.home.unixvextor.com`)"
+      traefik.http.routers.terminal-stream-codespace-https.tls: "true"
+      traefik.http.routers.terminal-stream-codespace-https.tls.certresolver: "cloudflare"
     networks:
         - backend

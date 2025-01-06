@@ -11,6 +11,7 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
       const containerId = await docker.createContainer(socket.id)
 
       userSocket.set(socket.id, containerId)
+      socket.emit('init', 'container ready')
 
       socket.on('runCode', async (msg: IrunCode) => {
         const containerId = userSocket.get(socket.id)
