@@ -18,6 +18,7 @@ services:
       DOCKER_EMAIL: ${DOCKER_EMAIL} 
       DOCKER_SERVERADDRESS: ${DOCKER_SERVERADDRESS}  
     restart: unless-stopped
+    user: "node:${GIP}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:

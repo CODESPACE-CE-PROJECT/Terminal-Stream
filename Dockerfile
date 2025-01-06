@@ -32,12 +32,16 @@ FROM node:20.18.0-alpine AS production
 
 WORKDIR /usr/src/app
 
+# Switch to non-root user for better security
+USER root
+RUN groupadd docker
+RUN usermod -aG docker node 
+
+USER node 
+
 # Copy only necessary files from build stage
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
-
-# Switch to non-root user for better security
-USER node
 
 ENV NODE_ENV=production
 
