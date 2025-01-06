@@ -28,7 +28,7 @@ jobs:
               echo "DOCKER_PASSWORD=$DOCKER_PASSWORD" >> .env
               echo "DOCKER_EMAIL=$DOCKER_EMAIL" >> .env
               echo "DOCKER_SERVERADDRESS=$DOCKER_SERVERADDRESS" >> .env
-              export GIP=$(cut -d: -f3 < <(getent group docker))
+              echo "GIP=$(cut -d: -f3 < <(getent group docker))" >> .env
 
           - name: Clear Cache 🫧
             run: |
