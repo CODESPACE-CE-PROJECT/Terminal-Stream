@@ -33,10 +33,6 @@ FROM node:20.18.0-alpine AS production
 WORKDIR /usr/src/app
 
 # Switch to non-root user for better security
-USER root
-RUN groupadd docker
-RUN usermod -aG docker node 
-
 USER node 
 
 # Copy only necessary files from build stage
