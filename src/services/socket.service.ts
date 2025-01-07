@@ -11,7 +11,7 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
       const containerId = await docker.createContainer(socket.id)
 
       userSocket.set(socket.id, containerId)
-      socket.emit('init', 'container ready')
+      socket.emit('init', 'terminal ready')
 
       socket.on('runCode', async (msg: IrunCode) => {
         const containerId = userSocket.get(socket.id)
@@ -19,6 +19,11 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
           socket.emit('error', 'No Container found for this user')
           return;
         }
+
+        if (!await docker.checkRunningStatus(containerId)) {
+          await docker.startContainer(containerId)
+        }
+
         try {
           const fileContainer = await docker.createFileInContainer(
             containerId,
@@ -31,6 +36,13 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
             socket.emit('error', 'Failed to run code.')
             return;
           }
+
+          const timeout = setTimeout(async () => {
+            await docker.killProcess(containerId);
+            socket.emit('error', 'Execution timed out.');
+          }, 10000); // 10 seconds
+
+          socket.on('kill', async () => clearTimeout(timeout)); // Clear timeout on kill
 
           stream.stdout.on('data', (data) => {
             socket.emit('message', data.toString('utf-8'))

@@ -56,8 +56,27 @@ export class DockerService {
 
   public removeContainer = async (containerId: string) => {
     const container = this.docker.getContainer(containerId);
+    if (await this.checkRunningStatus(containerId)) {
+      await container.kill()
+    }
     await container.remove({ force: true });
     return `remove ${container.id} container success`;
+  };
+
+  public killProcess = async (containerId: string) => {
+    const container = this.docker.getContainer(containerId)
+    await container.kill()
+  };
+
+  public checkRunningStatus = async (containerId: string) => {
+    const container = await this.docker.getContainer(containerId).inspect()
+    const state = container.State
+    return state.Running
+  };
+
+  public startContainer = async (containerId: string) => {
+    const container = this.docker.getContainer(containerId)
+    container.start()
   };
 
   public createFileInContainer = async (
