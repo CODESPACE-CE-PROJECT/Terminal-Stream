@@ -15,7 +15,6 @@ const decodeToken = (token: string): IJwt | null => {
 
 export const socketMiddleware = async (socket: Socket, next: Function) => {
   const token: string | undefined = socket.handshake.headers.authorization;
-
   try {
     if (!token) {
       console.error("Authorization header is missing");
@@ -42,4 +41,3 @@ export const socketMiddleware = async (socket: Socket, next: Function) => {
     next(new Error("Unauthorized"));
   }
 };
-

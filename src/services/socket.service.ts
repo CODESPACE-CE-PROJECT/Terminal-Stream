@@ -6,22 +6,22 @@ import { IrunCode } from "../interface/terminal.interface";
 const userSocket = new Map<string, string>();
 export const ioHandler = async (io: Server, docker: DockerService) => {
   io.use(socketMiddleware);
-  io.on('connection', async (socket: Socket) => {
+  io.on("connection", async (socket: Socket) => {
     try {
-      const containerId = await docker.createContainer(socket.id)
+      const containerId = await docker.createContainer(socket.id);
 
-      userSocket.set(socket.id, containerId)
-      socket.emit('init', 'terminal ready')
+      userSocket.set(socket.id, containerId);
+      socket.emit("init", "terminal ready");
 
-      socket.on('runCode', async (msg: IrunCode) => {
-        const containerId = userSocket.get(socket.id)
+      socket.on("runCode", async (msg: IrunCode) => {
+        const containerId = userSocket.get(socket.id);
         if (!containerId) {
-          socket.emit('error', 'No Container found for this user')
+          socket.emit("error", "No Container found for this user");
           return;
         }
 
-        if (!await docker.checkRunningStatus(containerId)) {
-          await docker.startContainer(containerId)
+        if (!(await docker.checkRunningStatus(containerId))) {
+          await docker.startContainer(containerId);
         }
 
         try {
@@ -29,49 +29,53 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
             containerId,
             msg.sourceCode,
             msg.language,
-            msg.fileName
-          )
-          const stream = await docker.runCode(containerId, fileContainer.filePath, msg.language)
+            msg.fileName,
+          );
+          const stream = await docker.runCode(
+            containerId,
+            fileContainer.filePath,
+            msg.language,
+          );
           if (!stream) {
-            socket.emit('error', 'Failed to run code.')
+            socket.emit("error", "Failed to run code.");
             return;
           }
 
-          const timeout = setTimeout(async () => {
-            await docker.killProcess(containerId);
-            socket.emit('error', 'Execution timed out.');
-          }, 10000); // 10 seconds
+          //const timeout = setTimeout(async () => {
+          //  await docker.killProcess(containerId);
+          //  socket.emit("error", "Execution timed out.");
+          //}, 10000); // 10 seconds
+          //
+          //socket.on("kill", async () => clearTimeout(timeout)); // Clear timeout on kill
 
-          socket.on('kill', async () => clearTimeout(timeout)); // Clear timeout on kill
+          stream.stdout.on("data", (data) => {
+            socket.emit("message", data.toString("utf-8"));
+          });
 
-          stream.stdout.on('data', (data) => {
-            socket.emit('message', data.toString('utf-8'))
-          })
-
-          socket.on('data', (inputMsg) => {
+          socket.on("data", (inputMsg) => {
             if (stream.ttyStream) {
-              stream.ttyStream.write(inputMsg)
+              stream.ttyStream.write(inputMsg);
             }
-          })
+          });
         } catch (error) {
-          socket.emit('error', 'Error during code execution')
+          socket.emit("error", "Error during code execution");
         }
       });
 
-      socket.on('disconnect', async () => {
+      socket.on("disconnect", async () => {
         try {
-          await docker.removeContainer(containerId)
-          userSocket.delete(socket.id)
+          await docker.removeContainer(containerId);
+          userSocket.delete(socket.id);
         } catch (error) {
-          throw new Error('Error Clen up Container')
+          throw new Error("Error Clen up Container");
         }
       });
     } catch (error) {
-      socket.emit('error', 'Error creating Docker container.');
+      socket.emit("error", "Error creating Docker container.");
     }
     socket.on("error", (_err) => {
       socket.disconnect();
-      throw new Error('Error Socket io')
+      throw new Error("Error Socket io");
     });
-  })
+  });
 };
