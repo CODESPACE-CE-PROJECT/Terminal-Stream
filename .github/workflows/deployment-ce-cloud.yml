@@ -2,10 +2,10 @@ name: Deployment
 
 on:
   push:
-    branches: ["dev"]
+    branches: ["main"]
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ce-cloud
     if: github.event_name == 'push'
     steps:
       - name: Clone Repo 🤖
@@ -13,7 +13,7 @@ jobs:
 
       - name: Set Environment Variables 🔠
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET_CE_CLOUD }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -36,7 +36,7 @@ jobs:
 
       - name: Run Image ✅
         run: |
-          docker compose up -d
+          docker compose -f docker-compose.ce-cloud.yaml up -d
 
       - name: Message ✉️
         uses: fjogeleit/http-request-action@v1
@@ -45,4 +45,4 @@ jobs:
           url: ${{ secrets.DISCORD_WEBHOOK }}
           method: "POST"
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"content": "CE PROJECT Terminal Stream Build ✅","embeds": [{"title": "Terminal Stream url","description": "https://codespace-terminal-stream.srv-demo-2.home.unixvextor.com"}]}'
+          data: '{"content": "CE PROJECT Terminal Stream CE Cloud ✅","embeds": [{"title": "Terminal Stream url","description": "https://ce67-07.cloud.ce.kmitl.ac.th/terminal"}]}'

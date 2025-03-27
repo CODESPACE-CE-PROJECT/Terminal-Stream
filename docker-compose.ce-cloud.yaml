@@ -1,0 +1,25 @@
+---
+networks:
+  backend:
+    external: true
+services:
+  terminal-stream:
+    container_name: terminal-stream
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: 3003
+      JWT_SECRET: ${JWT_SECRET}
+      BACKEND_URL: ${BACKEND_URL}
+      NODE_ENV: production
+      DOCKER_USERNAME: ${DOCKER_USERNAME}
+      DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+      DOCKER_EMAIL: ${DOCKER_EMAIL}
+      DOCKER_SERVERADDRESS: ${DOCKER_SERVERADDRESS}
+    restart: unless-stopped
+    user: "node:${GIP}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - backend
