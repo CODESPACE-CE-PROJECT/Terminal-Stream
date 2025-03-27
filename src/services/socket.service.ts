@@ -2,19 +2,41 @@ import { Server, Socket } from "socket.io";
 import { socketMiddleware } from "../middleware/socket.middleware";
 import { DockerService } from "./docker.service";
 import { IrunCode } from "../interface/terminal.interface";
+import { IUser } from "../interface/user.interface";
+
+declare module "socket.io" {
+  interface Socket {
+    user?: IUser;
+  }
+}
 
 const userSocket = new Map<string, string>();
 export const ioHandler = async (io: Server, docker: DockerService) => {
   io.use(socketMiddleware);
   io.on("connection", async (socket: Socket) => {
     try {
-      const containerId = await docker.createContainer(socket.id);
+      if (!socket.user || !socket.user.data.username) {
+        socket.emit("error", "User authentication failed");
+        socket.disconnect();
+        return;
+      }
 
-      userSocket.set(socket.id, containerId);
+      const username = socket.user.data.username;
+
+      if (userSocket.has(username)) {
+        const existingContainerId = userSocket.get(username);
+        if (existingContainerId) {
+          await docker.removeContainer(existingContainerId);
+        }
+      }
+
+      const containerId = await docker.createContainer(username);
+      userSocket.set(username, containerId);
+
       socket.emit("init", "terminal ready");
 
       socket.on("runCode", async (msg: IrunCode) => {
-        const containerId = userSocket.get(socket.id);
+        const containerId = userSocket.get(username);
         if (!containerId) {
           socket.emit("error", "No Container found for this user");
           return;
@@ -41,13 +63,6 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
             return;
           }
 
-          //const timeout = setTimeout(async () => {
-          //  await docker.killProcess(containerId);
-          //  socket.emit("error", "Execution timed out.");
-          //}, 10000); // 10 seconds
-          //
-          //socket.on("kill", async () => clearTimeout(timeout)); // Clear timeout on kill
-
           stream.stdout.on("data", (data) => {
             socket.emit("message", data.toString("utf-8"));
           });
@@ -65,9 +80,9 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
       socket.on("disconnect", async () => {
         try {
           await docker.removeContainer(containerId);
-          userSocket.delete(socket.id);
+          userSocket.delete(username);
         } catch (error) {
-          throw new Error("Error Clen up Container");
+          throw new Error("Error Cleaning up Container");
         }
       });
     } catch (error) {

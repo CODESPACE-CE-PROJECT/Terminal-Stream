@@ -13,6 +13,12 @@ const decodeToken = (token: string): IJwt | null => {
   }
 };
 
+declare module "socket.io" {
+  interface Socket {
+    user?: IUser;
+  }
+}
+
 export const socketMiddleware = async (socket: Socket, next: Function) => {
   const token: string | undefined = socket.handshake.headers.authorization;
   try {
@@ -34,6 +40,8 @@ export const socketMiddleware = async (socket: Socket, next: Function) => {
       console.error("User not found or unauthorized");
       return next(new Error("Unauthorized"));
     }
+
+    socket.user = user;
 
     next();
   } catch (error) {
