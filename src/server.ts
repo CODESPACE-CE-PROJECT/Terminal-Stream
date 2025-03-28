@@ -73,8 +73,10 @@ if (cluster.isPrimary) {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
+      allowedHeaders: ["authorization"],
       credentials: true,
     },
+    transports: ["websocket", "polling"],
     allowEIO3: true,
   });
 
