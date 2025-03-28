@@ -17,6 +17,7 @@ services:
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}
       DOCKER_EMAIL: ${DOCKER_EMAIL}
       DOCKER_SERVERADDRESS: ${DOCKER_SERVERADDRESS}
+      REDISHOST: ${REDISHOST}
     restart: unless-stopped
     user: "node:${GIP}"
     volumes:
