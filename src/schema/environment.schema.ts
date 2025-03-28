@@ -8,5 +8,6 @@ export const environmentSchema = z.object({
   DOCKER_USERNAME: z.string(),
   DOCKER_PASSWORD: z.string(),
   DOCKER_EMAIL: z.string(),
-  DOCKER_SERVERADDRESS: z.string()
+  DOCKER_SERVERADDRESS: z.string(),
+  REDISHOST: z.string(),
 });

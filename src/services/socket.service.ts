@@ -3,6 +3,7 @@ import { socketMiddleware } from "../middleware/socket.middleware";
 import { DockerService } from "./docker.service";
 import { IrunCode } from "../interface/terminal.interface";
 import { IUser } from "../interface/user.interface";
+import { redisClient } from "./redis.service";
 
 declare module "socket.io" {
   interface Socket {
@@ -10,7 +11,6 @@ declare module "socket.io" {
   }
 }
 
-const userSocket = new Map<string, string>();
 export const ioHandler = async (io: Server, docker: DockerService) => {
   io.use(socketMiddleware);
   io.on("connection", async (socket: Socket) => {
@@ -23,24 +23,30 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
 
       const username = socket.user.data.username;
 
-      if (userSocket.has(username)) {
-        const existingContainerId = userSocket.get(username);
-        if (existingContainerId) {
-          await docker.removeContainer(existingContainerId);
-        }
+      const existingContainerId = await redisClient.get(
+        `container-${username}`,
+      );
+
+      if (existingContainerId) {
+        await docker.removeContainer(existingContainerId);
+        redisClient.del(`container-${username}`);
       }
 
       const containerId = await docker.createContainer(username);
-      userSocket.set(username, containerId);
+
+      redisClient.set(`container-${username}`, containerId);
 
       socket.emit("init", "terminal ready");
 
       socket.on("runCode", async (msg: IrunCode) => {
-        const containerId = userSocket.get(username);
+        const containerId = await redisClient.get(`container-${username}`);
+
         if (!containerId) {
           socket.emit("error", "No Container found for this user");
           return;
         }
+
+        socket.emit("clear", "clear Terminal");
 
         if (!(await docker.checkRunningStatus(containerId))) {
           await docker.startContainer(containerId);
@@ -80,7 +86,7 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
       socket.on("disconnect", async () => {
         try {
           await docker.removeContainer(containerId);
-          userSocket.delete(username);
+          redisClient.del(`container-${username}`);
         } catch (error) {
           throw new Error("Error Cleaning up Container");
         }
@@ -89,7 +95,6 @@ export const ioHandler = async (io: Server, docker: DockerService) => {
       socket.emit("error", "Error creating Docker container.");
     }
     socket.on("error", (_err) => {
-      socket.disconnect();
       throw new Error("Error Socket io");
     });
   });

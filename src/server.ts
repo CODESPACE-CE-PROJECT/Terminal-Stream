@@ -9,7 +9,7 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { setupPrimary, createAdapter } from "@socket.io/cluster-adapter";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
-
+import { checkRedisHealth, redisClient } from "./services/redis.service";
 // Router
 import { serverRouter } from "./routes/server.route";
 import { environment } from "./config/environment";
@@ -65,7 +65,7 @@ if (cluster.isPrimary) {
 
   cluster.on("exit", (worker, _code, _signal) => {
     logger.info(`Worker ${worker.process.pid} died`);
-    cluster.fork()
+    cluster.fork();
   });
 } else {
   const httpServer = createServer(app);
@@ -75,14 +75,18 @@ if (cluster.isPrimary) {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    allowEIO3: true
+    allowEIO3: true,
   });
 
   io.adapter(createAdapter());
   setupWorker(io);
   ioHandler(io, dockerService);
 
-  httpServer.listen(environment.PORT, "0.0.0.0", () => {
+  httpServer.listen(environment.PORT, "0.0.0.0", async () => {
     logger.info(`Server ready on port ${environment.PORT}`);
+    redisClient.connect();
+    if (await checkRedisHealth()) {
+      logger.info("Redis Connected");
+    }
   });
 }
